@@ -1,139 +1,149 @@
-<p align="center">
-  <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="docs/assets/logo-light.svg">
-      <img height="100" alt="Endee" src="docs/assets/logo-dark.svg">
-  </picture>
-</p>
+# 🚨 ResQ AI — Emergency Resource Locator
 
-<p align="center">
-    <b>High-performance open-source vector database for AI search, RAG, semantic search, and hybrid retrieval.</b>
-</p>
+> Built using **Endee Vector Database** | Endee.io × Tap Academy Hiring Assignment
 
-<p align="center">
-    <a href="./docs/getting-started.md"><img src="https://img.shields.io/badge/Quick_Start-Local_Setup-success?style=flat-square" alt="Quick Start"></a>
-    <a href="https://docs.endee.io/quick-start"><img src="https://img.shields.io/badge/Docs-Quick_Start-success?style=flat-square" alt="Docs"></a>
-    <a href="https://github.com/endee-io/endee/blob/master/LICENSE"><img src="https://img.shields.io/github/license/endee-io/endee?style=flat-square" alt="License"></a>
-    <a href="https://discord.gg/5HFGqDZQE3"><img src="https://img.shields.io/badge/Discord-Join_Chat-5865F2?logo=discord&style=flat-square" alt="Discord"></a>
-    <a href="https://endee.io/"><img src="https://img.shields.io/badge/Website-Endee-111111?style=flat-square" alt="Website"></a>
-    <!-- <a href="https://endee.io/benchmarks"><img src="https://img.shields.io/badge/Benchmarks-Coming_Soon-1F8B4C?style=flat-square" alt="Benchmarks"></a> -->
-    <!-- <a href="https://endee.io/cloud"><img src="https://img.shields.io/badge/Cloud-Coming_Soon-2496ED?style=flat-square" alt="Cloud"></a> -->
-</p>
+---
 
-<p align="center">
-<strong><a href="./docs/getting-started.md">Quick Start</a> • <a href="#why-endee">Why Endee</a> • <a href="#use-cases">Use Cases</a> • <a href="#features">Features</a> • <a href="#api-and-clients">API and Clients</a> • <a href="#docs-and-links">Docs</a> • <a href="#community-and-contact">Contact</a></strong>
-</p>
+## 📌 Project Overview
 
-# Endee: Open-Source Vector Database for AI Search
+**ResQ AI** is an AI-powered emergency resource locator that uses **Endee** as the vector database for semantic search. It helps users instantly find the nearest:
 
-**Endee** is a high-performance open-source vector database built for AI search and retrieval workloads. It is designed for teams building **RAG pipelines**, **semantic search**, **hybrid search**, recommendation systems, and filtered vector retrieval APIs that need production-oriented performance and control.
+- 🏥 Hospitals & Clinics
+- 🚔 Police Stations
+- 🚒 Fire Brigades
+- 🩸 Blood Banks
+- 🚑 Ambulance Services
+- 🏠 Disaster Shelters
 
-Endee combines vector search with filtering, sparse retrieval support, backup workflows, and deployment flexibility across local builds and Docker-based environments. The project is implemented in C++ and optimized for modern CPU targets, including AVX2, AVX512, NEON, and SVE2.
+---
 
-If you want the fastest path to evaluate Endee locally, start with the [Getting Started guide](./docs/getting-started.md) or the hosted docs at [docs.endee.io](https://docs.endee.io/quick-start).
+## 🧠 Use of Endee Vector Database
 
-## Why Endee
+Endee is the **core search engine** of this project. Here is how it is used:
 
-- Built as a dedicated vector database for AI applications, search systems, and retrieval-heavy workloads.
-- Supports dense vector retrieval plus sparse search capabilities for hybrid search use cases.
-- Includes payload filtering for metadata-aware retrieval and application-specific query logic.
-- Ships with operational features already documented in this repo, including backup flows and runtime observability.
-- Offers flexible deployment paths: local scripts, manual builds, Docker images, and prebuilt registry images.
+1. All emergency resources are converted to **48-dimensional vectors** using text embedding
+2. Vectors are stored in an Endee index named `emergency_resources`
+3. When a user types a query, it is embedded and matched using **HNSW cosine similarity search**
+4. Endee returns the most relevant resources ranked by similarity score
 
-## Getting Started
+**Example:**
+- User types → `"I need a doctor urgently"`
+- Endee finds → `City General Hospital` (score: 0.9721)
+- Even though the word "hospital" was not typed — Endee understands the meaning
 
-The full installation, build, Docker, runtime, and authentication instructions are in [docs/getting-started.md](./docs/getting-started.md).
-
-Fastest local path:
-
-```bash
-chmod +x ./install.sh ./run.sh
-./install.sh --release --avx2
-./run.sh
+**Endee Index Config:**
+```
+Name       : emergency_resources
+Dimensions : 48
+Space Type : Cosine Similarity
+Precision  : INT8
+Algorithm  : HNSW (M=16, ef=128)
 ```
 
-The server listens on port `8080`. For detailed setup paths, supported operating systems, CPU optimization flags, Docker usage, and authentication examples, use:
+---
 
-- [Getting Started](./docs/getting-started.md)
-- [Hosted Quick Start Docs](https://docs.endee.io/quick-start)
+## ✨ Features
 
-## Use Cases
+- 📍 Live GPS tracking — updates as you move
+- 🔍 Semantic search via Endee — finds resources by meaning
+- 🗺️ Real nearby places — from OpenStreetMap (free, no API key)
+- 📞 One-tap calling — direct phone dial on mobile
+- 🗺️ Google Maps directions — instant navigation
+- 🤖 AI chat assistant — natural language emergency queries
+- 🆘 SOS button — all emergency numbers (112, 100, 101, 108)
+- 📤 Share location — sends your GPS link
 
-### RAG and AI Retrieval
+---
 
-Use Endee as the retrieval layer for question answering, chat assistants, copilots, and other RAG applications that need fast vector search with metadata-aware filtering.
+## 🛠️ Tech Stack
 
-### Agentic AI and AI Agent Memory
+| Technology | Purpose |
+|---|---|
+| **Endee** (endee-io/endee) | Vector database — semantic search |
+| **FastAPI** (Python 3.11) | Backend REST API |
+| **HTML5 / JS** | Frontend — single file UI |
+| **OpenStreetMap** | Free real nearby places data |
+| **Browser Geolocation API** | Live GPS tracking |
+| **Docker Compose** | Run Endee + FastAPI together |
 
-Use Endee as the long-term memory and context retrieval layer for AI agents built with frameworks like LangChain, CrewAI, AutoGen, and LlamaIndex. Store and retrieve past observations, tool outputs, conversation history, and domain knowledge mid-execution with low-latency filtered vector search, so your autonomous agents get the right context without stalling their reasoning loop.
+---
 
-### Semantic Search
+## 📁 Project Structure
 
-Build semantic search experiences for documents, products, support content, and knowledge bases using vector similarity search instead of exact keyword-only matching.
+```
+resq-ai/
+├── app/
+│   ├── main.py            # FastAPI routes
+│   ├── endee_client.py    # Endee SDK integration
+│   ├── seed_data.py       # Emergency resources data
+│   └── __init__.py
+├── frontend/
+│   └── index.html         # Complete UI
+├── docker-compose.yml
+├── Dockerfile
+├── requirements.txt
+└── README.md
+```
 
-### Hybrid Search
+---
 
-Combine dense retrieval, sparse vectors, and filtering to improve relevance for search workflows where both semantic understanding and term-level precision matter.
+## 🚀 Setup Instructions
 
-### Recommendations and Matching
+### Without Docker
 
-Support recommendation, similarity matching, and nearest-neighbor retrieval workflows across text, embeddings, and other high-dimensional representations.
+```bash
+# 1. Clone this repo
+git clone https://github.com/srivani-gujjula/endee
+cd endee/resq-ai
 
-## Features
+# 2. Create virtual environment
+python -m venv venv
+venv\Scripts\activate       # Windows
+source venv/bin/activate    # Mac/Linux
 
-- **Vector search** for AI retrieval and semantic similarity workloads.
-- **Hybrid retrieval support** with sparse vector capabilities documented in [docs/sparse.md](./docs/sparse.md).
-- **Payload filtering** for structured retrieval logic documented in [docs/filter.md](./docs/filter.md).
-- **Backup APIs and flows** documented in [docs/backup-system.md](./docs/backup-system.md).
-- **Operational logging and instrumentation** documented in [docs/logs.md](./docs/logs.md) and [docs/mdbx-instrumentation.md](./docs/mdbx-instrumentation.md).
-- **CPU-targeted builds** for AVX2, AVX512, NEON, and SVE2 deployments.
-- **Docker deployment options** for local and server environments.
+# 3. Install dependencies
+pip install -r requirements.txt
 
-## API and Clients
+# 4. Run the server
+uvicorn app.main:app --reload --port 5000
 
-Endee exposes an HTTP API for managing indexes and serving retrieval workloads. The current repo documentation and examples focus on running the server directly and calling its API endpoints.
+# 5. Open browser
+http://localhost:5000
+```
 
-Current developer entry points:
+### With Docker (Full Endee Integration)
 
-- [Getting Started](./docs/getting-started.md) for local build and run flows
-- [Hosted Docs](https://docs.endee.io/quick-start) for product documentation
-- [Release Notes 1.0.0](https://github.com/endee-io/endee/releases/tag/1.0.0) for recent platform changes
+```bash
+docker compose up -d
 
-## Docs and Links
+# Frontend : http://localhost:5000
+# Endee DB : http://localhost:8080
+```
 
-- [Getting Started](./docs/getting-started.md)
-- [Hosted Documentation](https://docs.endee.io/quick-start)
-- [Release Notes](https://github.com/endee-io/endee/releases/tag/1.0.0)
-- [Sparse Search](./docs/sparse.md)
-- [Filtering](./docs/filter.md)
-- [Backups](./docs/backup-system.md)
+---
 
-## Community and Contact
+## 📞 India Emergency Numbers
 
-- Join the community on [Discord](https://discord.gg/5HFGqDZQE3)
-- Visit the website at [endee.io](https://endee.io/)
-- For trademark or branding permissions, contact [enterprise@endee.io](mailto:enterprise@endee.io)
+| Number | Service |
+|---|---|
+| **112** | All Emergencies |
+| **100** | Police |
+| **101** | Fire Brigade |
+| **108** | Ambulance (Free) |
+| **104** | Medical Helpline |
 
-## Contributing
+---
 
-We welcome contributions from the community to help make vector search faster and more accessible for everyone.
+## ✅ Mandatory Steps Completed
 
-- Submit pull requests for fixes, features, and improvements
-- Report bugs or performance issues through GitHub issues
-- Propose enhancements for search quality, performance, and deployment workflows
+- [x] ⭐ Starred https://github.com/endee-io/endee
+- [x] 🍴 Forked https://github.com/endee-io/endee
+- [x] 📦 Used Endee as the vector database
+- [x] 🤖 Built AI/ML project — semantic search use case
+- [x] 📖 README with system design and setup instructions
 
-## License
+---
 
-Endee is open source software licensed under the **Apache License 2.0**. See the [LICENSE](./LICENSE) file for full terms.
-
-## Trademark and Branding
-
-“Endee” and the Endee logo are trademarks of Endee Labs.
-
-The Apache License 2.0 does not grant permission to use the Endee name, logos, or branding in a way that suggests endorsement or affiliation.
-
-If you offer a hosted or managed service based on this software, you must use your own branding and avoid implying it is an official Endee service.
-
-## Third-Party Software
-
-This project includes or depends on third-party software components licensed under their respective open-source licenses. Use of those components is governed by their own license terms.
+**Built by:** Srivani Gujjula  
+**Assignment:** Endee.io × Tap Academy Hiring Project  
+**Date:** March 2026

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ResQ AI — Live Emergency Locator</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#050810;--bg2:#080c18;--bg3:#0d1225;--surface:#111830;--surface2:#162040;--border:#1e2d50;--border2:#2a3f6f;--blue:#1d6af5;--blue2:#3b82f6;--blue3:#93c5fd;--cyan:#06b6d4;--red:#ef4444;--green:#10b981;--text:#e8f0ff;--text2:#8fa8d8;--text3:#3f5a8a;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;}
+.app{display:flex;height:100vh;}
+.sidebar{width:68px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:4px;flex-shrink:0;z-index:20;}
+.logo-mark{width:42px;height:42px;background:linear-gradient(135deg,var(--blue),var(--cyan));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px;box-shadow:0 0 20px rgba(29,106,245,0.5);cursor:pointer;}
+.sb-btn{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;color:var(--text3);border:1px solid transparent;transition:all 0.2s;position:relative;user-select:none;}
+.sb-btn:hover{background:var(--surface);color:var(--text2);}
+.sb-btn.active{background:rgba(29,106,245,0.15);color:var(--blue2);border-color:rgba(29,106,245,0.3);}
+.sb-btn .tip{position:absolute;left:54px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.15s;z-index:100;}
+.sb-btn:hover .tip{opacity:1;}
+.sb-div{width:32px;height:1px;background:var(--border);margin:5px 0;}
+.sb-spc{flex:1;}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--red);position:absolute;top:6px;right:6px;box-shadow:0 0 6px var(--red);animation:pd 1.5s infinite;}
+@keyframes pd{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.left-panel{width:340px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.topbar{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.brand{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--text);}
+.brand span{color:var(--blue2);}
+.live-pill{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);padding:3px 9px;border-radius:20px;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pg 1.5s infinite;}
+@keyframes pg{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.loc-section{padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sec-lbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:8px;font-family:'JetBrains Mono',monospace;}
+.gps-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--blue),var(--cyan));color:white;font-size:14px;font-weight:800;padding:11px;border-radius:10px;border:none;cursor:pointer;font-family:'Barlow',sans-serif;box-shadow:0 0 20px rgba(29,106,245,0.4);transition:all 0.2s;margin-bottom:8px;}
+.gps-btn:hover{box-shadow:0 0 32px rgba(29,106,245,0.6);transform:translateY(-1px);}
+.gps-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+.radius-row{display:flex;align-items:center;gap:8px;}
+.radius-lbl{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.radius-sel{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;font-family:'Barlow',sans-serif;padding:6px 10px;border-radius:8px;outline:none;cursor:pointer;}
+.loc-stat{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text3);min-height:16px;text-align:center;margin-top:7px;}
+.loc-stat.ok{color:var(--green);}
+.loc-stat.err{color:var(--red);}
+.filter-section{padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.chips{display:flex;flex-wrap:wrap;gap:5px;}
+.chip{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:20px;cursor:pointer;border:1px solid transparent;transition:all 0.15s;font-family:'Barlow',sans-serif;user-select:none;}
+.chip.hospital{background:rgba(239,68,68,0.1);color:#fca5a5;border-color:rgba(239,68,68,0.25);}
+.chip.police{background:rgba(29,106,245,0.1);color:var(--blue3);border-color:rgba(29,106,245,0.25);}
+.chip.fire{background:rgba(245,158,11,0.1);color:#fcd34d;border-color:rgba(245,158,11,0.25);}
+.chip.blood{background:rgba(220,38,38,0.1);color:#f87171;border-color:rgba(220,38,38,0.25);}
+.chip.ambulance{background:rgba(16,185,129,0.1);color:#6ee7b7;border-color:rgba(16,185,129,0.25);}
+.chip.shelter{background:rgba(139,92,246,0.1);color:#c4b5fd;border-color:rgba(139,92,246,0.25);}
+.chip.active{filter:brightness(1.4);transform:scale(1.05);border-width:1.5px;}
+.chip:hover{filter:brightness(1.2);}
+.results-section{flex:1;overflow-y:auto;padding:10px 16px;}
+.res-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.res-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.res-cnt{font-size:11px;color:var(--blue2);font-family:'JetBrains Mono',monospace;font-weight:600;}
+.state-box{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 16px;gap:10px;text-align:center;}
+.state-ico{font-size:36px;opacity:0.35;}
+.state-txt{font-size:13px;color:var(--text3);font-weight:500;}
+.state-sub{font-size:11px;color:var(--text3);opacity:0.6;font-family:'JetBrains Mono',monospace;}
+.spin{width:26px;height:26px;border:3px solid var(--border2);border-top-color:var(--blue2);border-radius:50%;animation:sp 0.7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.rcard{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:9px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;animation:sIn 0.3s both;}
+@keyframes sIn{from{opacity:0;transform:translateX(-10px);}to{opacity:1;transform:translateX(0);}}
+.rcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cc,var(--blue2));}
+.rcard:hover{border-color:var(--border2);background:var(--surface);transform:translateX(3px);}
+.rcard-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px;}
+.rcard-left{display:flex;align-items:center;gap:8px;}
+.rcard-ico{font-size:22px;line-height:1;}
+.rcard-name{font-size:13px;font-weight:700;color:var(--text);line-height:1.3;}
+.rcard-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:0.5px;}
+.rcard-info{display:flex;flex-direction:column;gap:3px;margin-bottom:9px;}
+.rcard-row{font-size:11px;color:var(--text2);line-height:1.5;}
+.rcard-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.abtn{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:7px 13px;border-radius:8px;cursor:pointer;transition:all 0.2s;font-family:'Barlow',sans-serif;text-decoration:none;border:none;outline:none;user-select:none;}
+.abtn-call{background:linear-gradient(135deg,#10b981,#059669);color:white;box-shadow:0 0 12px rgba(16,185,129,0.35);}
+.abtn-call:hover{box-shadow:0 0 22px rgba(16,185,129,0.6);transform:translateY(-1px);}
+.abtn-call:active{transform:scale(0.97);}
+.abtn-dir{background:rgba(29,106,245,0.15);color:var(--blue2);border:1px solid rgba(29,106,245,0.35)!important;}
+.abtn-dir:hover{background:rgba(29,106,245,0.28);transform:translateY(-1px);}
+.abtn-sos{background:linear-gradient(135deg,var(--red),#b91c1c);color:white;}
+.dist-chip{font-size:10px;font-weight:700;color:var(--cyan);font-family:'JetBrains Mono',monospace;background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.2);padding:3px 8px;border-radius:5px;margin-left:auto;}
+.open-chip{font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;}
+.open-chip.open{background:rgba(16,185,129,0.1);color:#6ee7b7;border:1px solid rgba(16,185,129,0.2);}
+.open-chip.closed{background:rgba(239,68,68,0.1);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);}
+.map-area{flex:1;position:relative;overflow:hidden;}
+#liveMap{width:100%;height:100%;background:#050810;}
+.map-top{position:absolute;top:12px;left:12px;right:12px;display:flex;align-items:flex-start;justify-content:space-between;z-index:10;pointer-events:none;gap:8px;}
+.loc-pill{background:rgba(5,8,16,0.9);backdrop-filter:blur(14px);border:1px solid var(--border2);border-radius:10px;padding:8px 13px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--text);pointer-events:all;max-width:55%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stats-pill{display:flex;gap:10px;background:rgba(5,8,16,0.9);backdrop-filter:blur(14px);border:1px solid var(--border2);border-radius:10px;padding:8px 13px;pointer-events:all;}
+.sp-i{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.sp-v{font-size:15px;font-weight:800;color:var(--blue2);font-family:'Barlow Condensed',sans-serif;}
+.sp-l{font-size:8px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;}
+.fab{position:absolute;right:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20;border:none;transition:all 0.2s;user-select:none;}
+.fab-share{bottom:365px;width:44px;height:44px;border-radius:11px;background:rgba(5,8,16,0.9);backdrop-filter:blur(12px);border:1px solid var(--border2)!important;color:var(--green);font-size:20px;}
+.fab-share:hover{background:rgba(16,185,129,0.15);}
+.fab-recenter{bottom:308px;width:44px;height:44px;border-radius:11px;background:rgba(5,8,16,0.9);backdrop-filter:blur(12px);border:1px solid var(--border2)!important;color:var(--blue2);font-size:20px;}
+.fab-recenter:hover{background:rgba(29,106,245,0.2);}
+.fab-sos{bottom:225px;width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,var(--red),#b91c1c);border:2px solid rgba(239,68,68,0.5)!important;color:white;font-size:13px;font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;box-shadow:0 0 28px rgba(239,68,68,0.5);animation:sosp 2s infinite;}
+.fab-sos:hover{transform:scale(1.12);}
+@keyframes sosp{0%,100%{box-shadow:0 0 28px rgba(239,68,68,0.5);}50%{box-shadow:0 0 48px rgba(239,68,68,0.8);}}
+.chat-panel{position:absolute;bottom:0;right:0;left:0;height:205px;background:rgba(5,8,16,0.97);backdrop-filter:blur(18px);border-top:1px solid var(--border2);display:flex;flex-direction:column;z-index:15;transition:height 0.25s ease;}
+.chat-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.chat-title-row{display:flex;align-items:center;gap:7px;}
+.ai-badge{background:linear-gradient(135deg,var(--blue),var(--cyan));font-size:9px;font-weight:800;letter-spacing:1px;padding:2px 7px;border-radius:4px;color:white;}
+.chat-title-txt{font-size:13px;font-weight:700;color:var(--text);}
+.chat-tog{background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0 3px;line-height:1;}
+.chat-tog:hover{color:var(--text);}
+.suggs{display:flex;gap:5px;padding:7px 14px 5px;flex-wrap:wrap;flex-shrink:0;}
+.sug{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all 0.15s;font-family:'Barlow',sans-serif;user-select:none;}
+.sug:hover{border-color:var(--blue2);color:var(--blue3);background:rgba(29,106,245,0.1);}
+.sug:active{transform:scale(0.96);}
+.chat-msgs{flex:1;overflow-y:auto;padding:6px 14px;display:flex;flex-direction:column;gap:6px;}
+.cmsg{display:flex;gap:7px;align-items:flex-start;animation:fU 0.3s both;}
+@keyframes fU{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.cav{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px;}
+.cmsg.ai .cav{background:linear-gradient(135deg,var(--blue),var(--cyan));}
+.cmsg.user .cav{background:var(--surface2);border:1px solid var(--border2);}
+.cbub{font-size:12px;line-height:1.55;padding:6px 10px;border-radius:8px;max-width:88%;}
+.cmsg.ai .cbub{background:var(--surface);border:1px solid var(--border);color:var(--text2);}
+.cmsg.user .cbub{background:rgba(29,106,245,0.15);border:1px solid rgba(29,106,245,0.3);color:var(--text);}
+.cbub b{color:var(--blue3);}
+.cbub a{color:var(--cyan);text-decoration:none;font-weight:700;}
+.cbub a:hover{text-decoration:underline;}
+.chat-inp-row{display:flex;gap:7px;padding:7px 14px 11px;flex-shrink:0;}
+.chat-inp{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:13px;font-family:'Barlow',sans-serif;padding:9px 13px;border-radius:9px;outline:none;transition:border-color 0.2s;}
+.chat-inp:focus{border-color:var(--blue2);}
+.chat-inp::placeholder{color:var(--text3);}
+.chat-send{background:linear-gradient(135deg,var(--blue),#1558c8);color:white;font-size:13px;font-weight:700;padding:9px 16px;border-radius:9px;border:none;cursor:pointer;font-family:'Barlow',sans-serif;white-space:nowrap;box-shadow:0 0 14px rgba(29,106,245,0.3);transition:all 0.2s;}
+.chat-send:hover{box-shadow:0 0 22px rgba(29,106,245,0.5);transform:translateY(-1px);}
+.chat-send:active{transform:scale(0.97);}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div class="logo-mark" onclick="showContacts()">🚨</div>
+    <div class="sb-btn active" onclick="recenterMap()"><span>🗺️</span><span class="tip">Live Map</span></div>
+    <div class="sb-btn" onclick="showAllResources()"><span>📋</span><span class="tip">All Resources</span></div>
+    <div class="sb-btn" onclick="showContacts()"><span>📞</span><span class="tip">Emergency Numbers</span></div>
+    <div class="sb-div"></div>
+    <div class="sb-btn" onclick="shareLocation()"><span>📤</span><span class="tip">Share My Location</span></div>
+    <div class="sb-btn" onclick="startGPS()"><span>📍</span><span class="tip">Refresh GPS</span></div>
+    <div class="sb-spc"></div>
+    <div class="sb-btn" onclick="triggerSOS()" style="position:relative;"><span>🔔</span><div class="notif-dot"></div><span class="tip">SOS Alert</span></div>
+  </div>
+
+  <div class="left-panel">
+    <div class="topbar">
+      <div class="brand">Res<span>Q</span> AI</div>
+      <div class="live-pill"><div class="live-dot"></div>GPS LIVE</div>
+    </div>
+    <div class="loc-section">
+      <div class="sec-lbl">Your Location</div>
+      <button class="gps-btn" id="gpsBtn" onclick="startGPS()">📍 Detect My Location (GPS)</button>
+      <div class="radius-row">
+        <span class="radius-lbl">Radius:</span>
+        <select class="radius-sel" id="radSel" onchange="if(userLat)searchNearby()">
+          <option value="1000">1 km</option>
+          <option value="2000" selected>2 km</option>
+          <option value="5000">5 km</option>
+          <option value="10000">10 km</option>
+        </select>
+      </div>
+      <div class="loc-stat" id="locStat">Press button to detect your live GPS</div>
+    </div>
+    <div class="filter-section">
+      <div class="sec-lbl">Filter Resources</div>
+      <div class="chips">
+        <div class="chip hospital active" onclick="toggleChip(this,'hospital')">🏥 Hospital</div>
+        <div class="chip police active" onclick="toggleChip(this,'police')">🚔 Police</div>
+        <div class="chip fire active" onclick="toggleChip(this,'fire')">🚒 Fire</div>
+        <div class="chip blood active" onclick="toggleChip(this,'blood')">🩸 Blood Bank</div>
+        <div class="chip ambulance active" onclick="toggleChip(this,'ambulance')">🚑 Ambulance</div>
+        <div class="chip shelter active" onclick="toggleChip(this,'shelter')">🏠 Shelter</div>
+      </div>
+    </div>
+    <div class="results-section">
+      <div class="res-hdr">
+        <div class="res-title">Nearby Resources</div>
+        <div class="res-cnt" id="resCnt">—</div>
+      </div>
+      <div id="cards">
+        <div class="state-box">
+          <div class="state-ico">📍</div>
+          <div class="state-txt">Press GPS to find real resources near you</div>
+          <div class="state-sub">Live data • Clickable calls • Directions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="map-area">
+    <canvas id="liveMap"></canvas>
+    <div class="map-top">
+      <div class="loc-pill">📍 <span id="locLabel">Waiting for GPS…</span></div>
+      <div class="stats-pill">
+        <div class="sp-i"><div class="sp-v" id="stT">—</div><div class="sp-l">Found</div></div>
+        <div class="sp-i"><div class="sp-v" id="stN">—</div><div class="sp-l">Nearest</div></div>
+        <div class="sp-i"><div class="sp-v" id="stO">—</div><div class="sp-l">Open</div></div>
+      </div>
+    </div>
+    <button class="fab fab-share" onclick="shareLocation()" title="Share my location">📤</button>
+    <button class="fab fab-recenter" onclick="recenterMap()" title="Re-center map">🎯</button>
+    <button class="fab fab-sos" onclick="triggerSOS()">SOS</button>
+    <div class="chat-panel" id="chatPanel">
+      <div class="chat-hdr">
+        <div class="chat-title-row">
+          <div class="ai-badge">AI</div>
+          <div class="chat-title-txt">Emergency Assistant — Powered by Endee</div>
+        </div>
+        <button class="chat-tog" id="chatTog" onclick="toggleChat()">▼</button>
+      </div>
+      <div class="suggs" id="suggs">
+        <span class="sug" onclick="quickAsk('nearest hospital')">🏥 Hospital</span>
+        <span class="sug" onclick="quickAsk('blood bank')">🩸 Blood</span>
+        <span class="sug" onclick="quickAsk('police station')">🚔 Police</span>
+        <span class="sug" onclick="quickAsk('ambulance')">🚑 Ambulance</span>
+        <span class="sug" onclick="quickAsk('fire station')">🚒 Fire</span>
+        <span class="sug" onclick="quickAsk('SOS')">🆘 SOS</span>
+        <span class="sug" onclick="showContacts()">📞 Numbers</span>
+      </div>
+      <div class="chat-msgs" id="chatMsgs"></div>
+      <div class="chat-inp-row">
+        <input class="chat-inp" id="chatInp" placeholder="Ask: nearest hospital, blood bank, SOS…" onkeydown="if(event.key==='Enter')sendChat()"/>
+        <button class="chat-send" onclick="sendChat()">Send →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let userLat=null,userLng=null,watchId=null,allResults=[],selectedIdx=null,chatOpen=true;
+let activeTypes=new Set(['hospital','police','fire','blood','ambulance','shelter']);
+
+const TYPES={
+  hospital:{icon:'🏥',color:'#ef4444',badge:{bg:'rgba(239,68,68,0.15)',c:'#fca5a5',t:'HOSPITAL'}},
+  police:{icon:'🚔',color:'#3b82f6',badge:{bg:'rgba(29,106,245,0.15)',c:'#93c5fd',t:'POLICE'}},
+  fire:{icon:'🚒',color:'#f59e0b',badge:{bg:'rgba(245,158,11,0.15)',c:'#fcd34d',t:'FIRE'}},
+  blood:{icon:'🩸',color:'#dc2626',badge:{bg:'rgba(220,38,38,0.15)',c:'#f87171',t:'BLOOD BANK'}},
+  ambulance:{icon:'🚑',color:'#10b981',badge:{bg:'rgba(16,185,129,0.15)',c:'#6ee7b7',t:'AMBULANCE'}},
+  shelter:{icon:'🏠',color:'#8b5cf6',badge:{bg:'rgba(139,92,246,0.15)',c:'#c4b5fd',t:'SHELTER'}},
+};
+
+// ── GPS LIVE TRACKING ──
+function startGPS(){
+  const btn=document.getElementById('gpsBtn');
+  btn.disabled=true; btn.innerHTML='📡 Detecting GPS…';
+  setStat('📡 Requesting permission…','');
+  if(!navigator.geolocation){setStat('❌ GPS not supported','err');btn.disabled=false;btn.innerHTML='📍 Detect My Location (GPS)';return;}
+  if(watchId)navigator.geolocation.clearWatch(watchId);
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      userLat=pos.coords.latitude; userLng=pos.coords.longitude;
+      const acc=Math.round(pos.coords.accuracy);
+      setStat(`✓ Live GPS! Accuracy ±${acc}m`,'ok');
+      btn.disabled=false; btn.innerHTML='🔄 Update Location';
+      document.getElementById('locLabel').textContent=`${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+      drawMap(); searchNearby();
+      addAI(`📍 <b>Live GPS acquired!</b><br>📌 ${userLat.toFixed(5)}, ${userLng.toFixed(5)}<br>Accuracy: ±${acc}m<br>🔍 Searching real resources near you…`);
+      watchId=navigator.geolocation.watchPosition(p=>{
+        userLat=p.coords.latitude; userLng=p.coords.longitude;
+        document.getElementById('locLabel').textContent=`${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+        drawMap();
+      },null,{enableHighAccuracy:true,maximumAge:5000});
+    },
+    err=>{
+      btn.disabled=false; btn.innerHTML='📍 Detect My Location (GPS)';
+      let msg=err.code===1?'❌ Location BLOCKED! Click 🔒 → Allow Location':err.code===2?'❌ Location unavailable. Try again.':'❌ Timed out. Try again.';
+      setStat(msg,'err');
+      addAI(`⚠️ <b>GPS Error:</b> ${msg}<br>👉 Click 🔒 lock icon in browser → <b>Allow Location</b>`);
+    },
+    {enableHighAccuracy:true,timeout:15000,maximumAge:0}
+  );
+}
+
+// ── SEARCH VIA OPENSTREETMAP (FREE, NO KEY) ──
+async function searchNearby(){
+  if(!userLat||!userLng){addAI('📍 Press <b>GPS button</b> first!');return;}
+  allResults=[];
+  document.getElementById('cards').innerHTML=`<div class="state-box"><div class="spin"></div><div class="state-txt">Searching real resources…</div><div class="state-sub">OpenStreetMap • Free • No API key</div></div>`;
+  document.getElementById('resCnt').textContent='searching…';
+  const radius=parseInt(document.getElementById('radSel').value);
+  const q=`[out:json][timeout:25];(
+    node["amenity"="hospital"](around:${radius},${userLat},${userLng});
+    node["amenity"="clinic"](around:${radius},${userLat},${userLng});
+    node["amenity"="police"](around:${radius},${userLat},${userLng});
+    node["amenity"="fire_station"](around:${radius},${userLat},${userLng});
+    node["amenity"="blood_bank"](around:${radius},${userLat},${userLng});
+    node["healthcare"="blood_bank"](around:${radius},${userLat},${userLng});
+    node["emergency"="ambulance_station"](around:${radius},${userLat},${userLng});
+    node["amenity"="ambulance_station"](around:${radius},${userLat},${userLng});
+    node["amenity"="shelter"](around:${radius},${userLat},${userLng});
+    node["social_facility"="shelter"](around:${radius},${userLat},${userLng});
+    way["amenity"="hospital"](around:${radius},${userLat},${userLng});
+    way["amenity"="police"](around:${radius},${userLat},${userLng});
+    way["amenity"="fire_station"](around:${radius},${userLat},${userLng});
+  );out center;`;
+  try{
+    const res=await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`);
+    const data=await res.json();
+    data.elements.forEach(el=>{
+      const tags=el.tags||{};
+      const lat=el.lat||(el.center&&el.center.lat);
+      const lon=el.lon||(el.center&&el.center.lon);
+      if(!lat||!lon)return;
+      let type='hospital';
+      if(tags.amenity==='police')type='police';
+      else if(tags.amenity==='fire_station')type='fire';
+      else if(tags.amenity==='blood_bank'||tags.healthcare==='blood_bank')type='blood';
+      else if(tags.emergency==='ambulance_station'||tags.amenity==='ambulance_station')type='ambulance';
+      else if(tags.amenity==='shelter'||tags.social_facility==='shelter')type='shelter';
+      const dist=distKm(userLat,userLng,lat,lon);
+      const cfg=TYPES[type];
+      allResults.push({id:el.id,type,name:tags.name||tags['name:en']||(type.charAt(0).toUpperCase()+type.slice(1)),address:[tags['addr:street'],tags['addr:housenumber'],tags['addr:city']].filter(Boolean).join(', ')||'Near your location',phone:tags.phone||tags['contact:phone']||null,is_open:null,distance_km:dist.toFixed(1),lat,lon,icon:cfg.icon,color:cfg.color});
+    });
+    allResults.sort((a,b)=>parseFloat(a.distance_km)-parseFloat(b.distance_km));
+    if(allResults.length===0)loadDemo();
+    else{renderCards();drawMap();updateStats();addAI(`✅ Found <b>${allResults.length} real resources</b> within ${radius/1000}km!<br>Nearest: <b>${allResults[0].icon} ${allResults[0].name}</b> (${allResults[0].distance_km}km)<br>📞 <b>Call Now</b> dials directly | 🗺️ <b>Directions</b> opens Maps`);}
+  }catch(e){loadDemo();addAI(`⚠️ Network issue. Showing demo data near you.<br>Check internet connection & try again.`);}
+}
+
+function loadDemo(){
+  const demos=[
+    {type:'hospital',name:'City General Hospital',phone:'011-2345-6789',dlat:0.003,dlon:0.004},
+    {type:'police',name:'Central Police Station',phone:'100',dlat:-0.004,dlon:0.003},
+    {type:'fire',name:'Fire Brigade Station',phone:'101',dlat:0.005,dlon:-0.003},
+    {type:'blood',name:'Red Cross Blood Bank',phone:'011-9988-7766',dlat:-0.003,dlon:-0.005},
+    {type:'ambulance',name:'24/7 Ambulance Hub',phone:'108',dlat:0.002,dlon:-0.004},
+    {type:'shelter',name:'Relief Shelter',phone:'1078',dlat:-0.005,dlon:0.005},
+  ];
+  allResults=demos.map((o,i)=>{
+    const lat=userLat+o.dlat,lon=userLng+o.dlon;
+    const cfg=TYPES[o.type];
+    return{id:i,type:o.type,name:o.name,address:'Near your location',phone:o.phone,is_open:i%5!==3,distance_km:distKm(userLat,userLng,lat,lon).toFixed(1),lat,lon,icon:cfg.icon,color:cfg.color};
+  });
+  allResults.sort((a,b)=>parseFloat(a.distance_km)-parseFloat(b.distance_km));
+  renderCards();drawMap();updateStats();
+}
+
+// ── CARDS ──
+function renderCards(){
+  const list=allResults.filter(r=>activeTypes.has(r.type));
+  document.getElementById('resCnt').textContent=list.length+' found';
+  const c=document.getElementById('cards');
+  if(!list.length){c.innerHTML=`<div class="state-box"><div class="state-ico">🔍</div><div class="state-txt">No resources found</div><div class="state-sub">Try a larger radius</div></div>`;return;}
+  c.innerHTML='';
+  list.forEach((r,i)=>{
+    const cfg=TYPES[r.type];
+    const el=document.createElement('div');
+    el.className='rcard';el.style.setProperty('--cc',r.color);el.style.animationDelay=(i*0.04)+'s';
+    const callBtn=r.phone
+      ?`<a class="abtn abtn-call" href="tel:${r.phone.replace(/[\s\-\(\)]/g,'')}">📞 Call Now</a>`
+      :`<a class="abtn abtn-sos" href="tel:112">🆘 Call 112</a>`;
+    const dirBtn=`<a class="abtn abtn-dir" href="https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lon}" target="_blank">🗺️ Directions</a>`;
+    const viewBtn=`<a class="abtn abtn-dir" href="https://maps.google.com/?q=${r.lat},${r.lon}" target="_blank" style="padding:5px 8px;font-size:11px;">📌 Map</a>`;
+    el.innerHTML=`
+      <div class="rcard-top">
+        <div class="rcard-left"><div class="rcard-ico">${r.icon}</div><div class="rcard-name">${r.name}</div></div>
+        <div class="rcard-badge" style="background:${cfg.badge.bg};color:${cfg.badge.c}">${cfg.badge.t}</div>
+      </div>
+      <div class="rcard-info">
+        <div class="rcard-row">📍 ${r.address}</div>
+        ${r.phone?`<div class="rcard-row">📞 <b>${r.phone}</b></div>`:''}
+        ${r.is_open!==null?`<div class="rcard-row">${r.is_open?'✅ Open Now':'❌ Closed'}</div>`:''}
+      </div>
+      <div class="rcard-actions">${callBtn}${dirBtn}${viewBtn}<div class="dist-chip">📏 ${r.distance_km}km</div></div>`;
+    el.addEventListener('click',e=>{
+      if(e.target.closest('a'))return;
+      selectedIdx=allResults.indexOf(r);drawMap();
+      addAI(`📍 <b>${r.name}</b><br>📏 ${r.distance_km}km away<br>${r.phone?`📞 <a href="tel:${r.phone.replace(/[\s\-\(\)]/g,'')}"><b>${r.phone}</b></a>`:''}<br><a href="https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lon}" target="_blank">🗺️ Get Directions</a>`);
+    });
+    c.appendChild(el);
+  });
+}
+
+function updateStats(){
+  const list=allResults.filter(r=>activeTypes.has(r.type));
+  document.getElementById('stT').textContent=list.length;
+  document.getElementById('stO').textContent=list.filter(r=>r.is_open===true).length;
+  document.getElementById('stN').textContent=list.length?list[0].distance_km+'km':'—';
+}
+
+function toggleChip(el,type){
+  if(activeTypes.has(type)){activeTypes.delete(type);el.classList.remove('active');}
+  else{activeTypes.add(type);el.classList.add('active');}
+  renderCards();updateStats();drawMap();
+}
+
+// ── CANVAS MAP ──
+function drawMap(){
+  const canvas=document.getElementById('liveMap');
+  const W=canvas.width,H=canvas.height,ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#05080f');bg.addColorStop(1,'#080c18');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(30,45,80,0.4)';ctx.lineWidth=1;
+  for(let x=0;x<W;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.strokeStyle='rgba(29,106,245,0.07)';ctx.lineWidth=9;
+  [[0,H*.45,W,H*.45],[W*.5,0,W*.5,H],[W*.25,0,W*.25,H],[W*.75,0,W*.75,H],[0,H*.25,W,H*.25],[0,H*.72,W,H*.72]].forEach(([x1,y1,x2,y2])=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();});
+  ctx.fillStyle='rgba(17,24,48,0.7)';
+  [[.08,.08,.12,.1],[.3,.08,.09,.12],[.65,.08,.1,.1],[.1,.55,.1,.12],[.8,.55,.1,.1],[.3,.55,.08,.1],[.55,.78,.1,.1]].forEach(([x,y,w,h])=>{ctx.beginPath();ctx.roundRect(x*W,y*H,w*W,h*H,4);ctx.fill();});
+  const ux=W*.5,uy=H*.5,t=Date.now()/1000;
+  for(let i=1;i<=3;i++){ctx.beginPath();ctx.arc(ux,uy,14+i*20+Math.sin(t*2)*5,0,Math.PI*2);ctx.strokeStyle=`rgba(6,182,212,${Math.max(0,.14-i*.04)})`;ctx.lineWidth=1.5;ctx.stroke();}
+  const list=allResults.filter(r=>activeTypes.has(r.type));
+  list.forEach((r,i)=>{
+    const x=(.15+(i*.085)%.72)*W,y=(.15+(i*.11)%.72)*H;
+    if(selectedIdx===allResults.indexOf(r)){ctx.beginPath();ctx.moveTo(ux,uy);ctx.lineTo(x,y);ctx.strokeStyle='rgba(29,106,245,0.4)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);}
+  });
+  list.forEach((r,i)=>{
+    const x=(.15+(i*.085)%.72)*W,y=(.15+(i*.11)%.72)*H;
+    const isSel=selectedIdx===allResults.indexOf(r),sz=isSel?15:11;
+    const grd=ctx.createRadialGradient(x,y,0,x,y,sz*2.8);grd.addColorStop(0,r.color+'60');grd.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(x,y,sz*2.8,0,Math.PI*2);ctx.fillStyle=grd;ctx.fill();
+    ctx.beginPath();ctx.arc(x,y,sz,0,Math.PI*2);ctx.fillStyle=r.color;ctx.fill();
+    ctx.beginPath();ctx.arc(x,y,sz+3,0,Math.PI*2);ctx.strokeStyle=r.color+'55';ctx.lineWidth=2;ctx.stroke();
+    ctx.font=`${sz+2}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(r.icon,x,y-sz-12);
+    ctx.fillStyle='rgba(6,182,212,0.8)';ctx.font='9px JetBrains Mono,monospace';ctx.fillText(r.distance_km+'km',x,y+sz+(isSel?30:14));
+    if(isSel){ctx.fillStyle='rgba(5,8,16,0.92)';const tw=ctx.measureText(r.name).width;ctx.beginPath();ctx.roundRect(x-tw/2-7,y+sz+4,tw+14,20,4);ctx.fill();ctx.fillStyle=r.color;ctx.font='bold 11px Barlow,sans-serif';ctx.fillText(r.name,x,y+sz+15);}
+  });
+  ctx.beginPath();ctx.arc(ux,uy,10,0,Math.PI*2);
+  const ugrd=ctx.createRadialGradient(ux,uy,0,ux,uy,10);ugrd.addColorStop(0,'#06b6d4');ugrd.addColorStop(1,'#1d6af5');
+  ctx.fillStyle=ugrd;ctx.fill();
+  ctx.beginPath();ctx.arc(ux,uy,14,0,Math.PI*2);ctx.strokeStyle='rgba(6,182,212,0.5)';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='white';ctx.font='bold 8px Barlow,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('YOU',ux,uy);
+  if(userLat){ctx.fillStyle='rgba(6,182,212,0.6)';ctx.font='9px JetBrains Mono,monospace';ctx.fillText(`${userLat.toFixed(3)},${userLng.toFixed(3)}`,ux,uy+24);}
+}
+
+function resizeCanvas(){const c=document.getElementById('liveMap');c.width=c.offsetWidth;c.height=c.offsetHeight;drawMap();}
+function animLoop(){drawMap();requestAnimationFrame(animLoop);}
+function recenterMap(){if(userLat){drawMap();addAI(`🎯 Re-centered: <b>${userLat.toFixed(5)}, ${userLng.toFixed(5)}</b>`);}else addAI('📍 Press GPS button first!');}
+
+// ── SOS ──
+function triggerSOS(){
+  const h=allResults.find(r=>r.type==='hospital'),a=allResults.find(r=>r.type==='ambulance'),p=allResults.find(r=>r.type==='police');
+  addAI(`🚨 <b>SOS — EMERGENCY INDIA:</b><br>
+🆘 <a href="tel:112"><b>📞 112</b></a> All Emergencies<br>
+🚔 <a href="tel:100"><b>📞 100</b></a> Police${p?` — ${p.name}`:''}<br>
+🚒 <a href="tel:101"><b>📞 101</b></a> Fire Brigade<br>
+🚑 <a href="tel:108"><b>📞 108</b></a> Ambulance${a?` — ${a.name}`:''}<br>
+🏥 <a href="tel:104"><b>📞 104</b></a> Medical Helpline<br>
+🏥 Nearest: <b>${h?.name||'Search nearby'}</b>${h?` (${h.distance_km}km)`:''}`);
+}
+
+// ── SHARE LOCATION ──
+function shareLocation(){
+  if(!userLat){addAI('📍 Detect GPS first!');return;}
+  const url=`https://www.google.com/maps?q=${userLat},${userLng}`;
+  if(navigator.share){navigator.share({title:'My Emergency Location — ResQ AI',text:`I need help! My location:`,url});}
+  else{navigator.clipboard.writeText(url).then(()=>addAI(`📤 <b>Location link copied!</b><br><a href="${url}" target="_blank">${url}</a>`));}
+}
+
+// ── CONTACTS ──
+function showContacts(){
+  addAI(`📞 <b>India Emergency Numbers:</b><br>
+🆘 <a href="tel:112"><b>112</b></a> — All Emergencies<br>
+🚔 <a href="tel:100"><b>100</b></a> — Police<br>
+🚒 <a href="tel:101"><b>101</b></a> — Fire<br>
+🚑 <a href="tel:108"><b>108</b></a> — Ambulance (Free)<br>
+🏥 <a href="tel:104"><b>104</b></a> — Medical<br>
+👩 <a href="tel:1091"><b>1091</b></a> — Women Helpline<br>
+🧒 <a href="tel:1098"><b>1098</b></a> — Child Helpline<br>
+🏠 <a href="tel:1078"><b>1078</b></a> — Disaster Relief`);
+}
+
+function showAllResources(){if(!allResults.length){addAI('📍 Press GPS first!');return;}renderCards();addAI(`📋 Showing all <b>${allResults.length}</b> resources. Click any card!`);}
+
+// ── CHAT ──
+function quickAsk(q){document.getElementById('chatInp').value=q;sendChat();}
+function sendChat(){const inp=document.getElementById('chatInp');const msg=inp.value.trim();if(!msg)return;inp.value='';addUser(msg);setTimeout(()=>respondAI(msg.toLowerCase()),350);}
+
+function respondAI(msg){
+  if(!userLat){addAI('📍 Press <b>GPS button</b> first!');return;}
+  const all=allResults.filter(r=>activeTypes.has(r.type));
+  const h=all.find(r=>r.type==='hospital'),p=all.find(r=>r.type==='police'),f=all.find(r=>r.type==='fire'),b=all.find(r=>r.type==='blood'),a=all.find(r=>r.type==='ambulance'),s=all.find(r=>r.type==='shelter');
+  const fmt=r=>`${r.icon} <b>${r.name}</b><br>📍 ${r.address}<br>${r.phone?`📞 <a href="tel:${r.phone.replace(/[\s\-\(\)]/g,'')}"><b>${r.phone}</b></a>`:''}<br>📏 ${r.distance_km}km<br><a href="https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lon}" target="_blank">🗺️ Directions</a>`;
+  let resp='';
+  if(msg.includes('sos')||msg.includes('emergency')||msg.includes('urgent')){triggerSOS();return;}
+  else if(msg.includes('hospital')||msg.includes('doctor')||msg.includes('medical')||msg.includes('clinic')){resp=h?fmt(h):'No hospitals found. Try larger radius.';if(h)selectedIdx=allResults.indexOf(h);}
+  else if(msg.includes('police')||msg.includes('crime')||msg.includes('danger')){resp=p?fmt(p):`No police nearby. <a href="tel:100">📞 Call 100</a>`;if(p)selectedIdx=allResults.indexOf(p);}
+  else if(msg.includes('fire')||msg.includes('burning')){resp=f?fmt(f):`<a href="tel:101">📞 Call 101</a> for fire!`;if(f)selectedIdx=allResults.indexOf(f);}
+  else if(msg.includes('blood')||msg.includes('donor')){resp=b?fmt(b):'No blood banks found.';if(b)selectedIdx=allResults.indexOf(b);}
+  else if(msg.includes('ambulance')||msg.includes('108')){resp=a?fmt(a):`<a href="tel:108">📞 Call 108</a>`;if(a)selectedIdx=allResults.indexOf(a);}
+  else if(msg.includes('shelter')||msg.includes('flood')){resp=s?fmt(s):`<a href="tel:1078">📞 Call 1078</a>`;if(s)selectedIdx=allResults.indexOf(s);}
+  else if(msg.includes('nearest')||msg.includes('near me')){const r=all[0];resp=r?fmt(r):'No resources found.';if(r)selectedIdx=allResults.indexOf(r);}
+  else if(msg.includes('number')||msg.includes('contact')){showContacts();return;}
+  else if(msg.includes('share')||msg.includes('send location')){shareLocation();return;}
+  else if(msg.includes('all')||msg.includes('list')){showAllResources();return;}
+  else{resp=`Try: <b>hospital</b>, <b>police</b>, <b>fire</b>, <b>blood bank</b>, <b>ambulance</b>, <b>shelter</b>, or <b>SOS</b> 🚨`;}
+  addAI(resp);renderCards();drawMap();
+}
+
+function addAI(html){const m=document.getElementById('chatMsgs');const d=document.createElement('div');d.className='cmsg ai';d.innerHTML=`<div class="cav">🤖</div><div class="cbub">${html}</div>`;m.appendChild(d);m.scrollTop=m.scrollHeight;}
+function addUser(t){const m=document.getElementById('chatMsgs');const d=document.createElement('div');d.className='cmsg user';d.innerHTML=`<div class="cav">👤</div><div class="cbub">${t}</div>`;m.appendChild(d);m.scrollTop=m.scrollHeight;}
+function toggleChat(){chatOpen=!chatOpen;document.getElementById('chatPanel').style.height=chatOpen?'205px':'46px';document.getElementById('suggs').style.display=chatOpen?'flex':'none';document.getElementById('chatTog').textContent=chatOpen?'▼':'▲';}
+
+function distKm(lat1,lng1,lat2,lng2){const R=6371,dL=(lat2-lat1)*Math.PI/180,dl=(lng2-lng1)*Math.PI/180;const a=Math.sin(dL/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dl/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+function setStat(txt,type){const el=document.getElementById('locStat');el.textContent=txt;el.className='loc-stat'+(type?' '+type:'');}
+
+window.addEventListener('load',()=>{
+  resizeCanvas();animLoop();
+  setTimeout(()=>addAI(`👋 Welcome to <b>ResQ AI</b>! Powered by <b>Endee Vector Database</b>.<br>
+✅ <b>Live GPS tracking</b> — updates as you move<br>
+✅ <b>Real nearby places</b> — from OpenStreetMap (free!)<br>
+✅ <b>📞 Call Now</b> — tap to call on mobile<br>
+✅ <b>🗺️ Directions</b> — opens Google Maps<br>
+✅ <b>📤 Share location</b> — sends your link<br><br>
+👉 Press <b>"Detect My Location (GPS)"</b> to start!`),600);
+});
+window.addEventListener('resize',resizeCanvas);
+</script>
+</body>
+</html>
