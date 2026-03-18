@@ -1,6 +1,6 @@
 # 🚨 ResQ AI — Emergency Resource Locator
 
-> Built using **Endee Vector Database** | Endee.io × Tap Academy Hiring Assignment
+> Built using **Endee Vector Database** 
 
 ---
 
@@ -134,16 +134,5 @@ docker compose up -d
 
 ---
 
-## ✅ Mandatory Steps Completed
-
-- [x] ⭐ Starred https://github.com/endee-io/endee
-- [x] 🍴 Forked https://github.com/endee-io/endee
-- [x] 📦 Used Endee as the vector database
-- [x] 🤖 Built AI/ML project — semantic search use case
-- [x] 📖 README with system design and setup instructions
-
----
-
-**Built by:** Srivani Gujjula  
-**Assignment:** Endee.io × Tap Academy Hiring Project  
+**Built by:** Srivani Gujjula   
 **Date:** March 2026
